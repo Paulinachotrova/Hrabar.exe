@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Lock In · Google Classroom</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root{--pri:#7652D6;--prid:#6240BD;--soft:#F2EEFC;--bg:#F8F9FC;--card:#fff;--ink:#171A2B;--mute:#697386;--line:#E7E9F0;--ok:#1f8a5b;--okb:#e6f4ec;--err:#c0392b;--errb:#fbeceb;--warn:#9a6700;--warnb:#fdf3dc;color-scheme:light}
+@media (prefers-color-scheme:dark){:root{--pri:#7c5ce0;--prid:#8e72ea;--soft:#2a2347;--bg:#10111a;--card:#171926;--ink:#eceef6;--mute:#9aa3b8;--line:#272a3b;--ok:#4cc38a;--okb:#16291f;--err:#ee7a6e;--errb:#2e1a19;--warn:#e3b341;--warnb:#2c2412;color-scheme:dark}}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.55 "Inter",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.wrap{max-width:760px;margin:0 auto;padding:24px 16px 48px}
+h1{font-size:22px;margin:0 0 4px}.sub{color:var(--mute);margin:0 0 20px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:16px;margin-bottom:10px}
+.btn{height:38px;padding:0 14px;border-radius:9px;border:1px solid var(--line);background:var(--card);color:var(--ink);font:inherit;font-weight:500;cursor:pointer}
+.btn.pri{background:var(--pri);border-color:var(--pri);color:#fff}.btn.pri:hover{background:var(--prid)}
+input{width:100%;height:38px;padding:0 12px;border:1px solid var(--line);border-radius:9px;background:var(--card);color:var(--ink);font:inherit}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{display:inline-block;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:600;background:var(--soft);color:var(--pri)}
+.chip.ok{background:var(--okb);color:var(--ok)}.chip.err{background:var(--errb);color:var(--err)}.chip.warn{background:var(--warnb);color:var(--warn)}
+h2{font-size:15px;margin:22px 0 10px}a{color:var(--pri)}
+.t{font-weight:600;margin:0 0 4px}.m{color:var(--mute);font-size:13px}
+.er{color:var(--err);margin:10px 0}:focus-visible{outline:2px solid var(--pri);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="wrap">
+ <h1>Google Classroom</h1>
+ <p class="sub">Виж заданията и сроковете си от всички курсове на едно място.</p>
+ <div id="setup" class="card">
+  <b>Първо свързване</b>
+  <p class="m" style="margin:6px 0 10px">Постави Client ID от твоя Google Cloud проект. Той не е тайна и се пази само в този браузър.</p>
+  <div class="row"><input id="cid" placeholder="xxxxxxxx.apps.googleusercontent.com" aria-label="Client ID" style="flex:1;min-width:220px"><button class="btn" onclick="saveId()">Запази</button></div>
+ </div>
+ <div class="row" style="margin-bottom:6px"><button class="btn pri" id="go" onclick="connect()">Свържи Google Classroom</button><button class="btn" id="nt" onclick="notif()" style="display:none">Включи напомняния</button><button class="btn" id="rf" onclick="load()" style="display:none">Обнови</button></div>
+ <div id="er" class="er" role="alert"></div>
+ <div id="out"></div>
+ <p class="m" style="margin-top:24px">Напомнянията работят само докато тази страница е отворена. Данните се четат само за теб и не се пазят на сървър.</p>
+</div>
+<script>
+const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const SC='https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly';
+let tok=null,tc=null,items=[],iv=null;
+const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
+function init(){const id=ls('lic_cid');if(id){$('#cid').value=id;$('#setup').style.display='none'}}
+function saveId(){const v=$('#cid').value.trim();if(!/\.apps\.googleusercontent\.com$/.test(v)){$('#er').textContent='Client ID трябва да завършва на .apps.googleusercontent.com';return}ls('lic_cid',v);$('#er').textContent='';$('#setup').style.display='none'}
+function connect(){const id=ls('lic_cid');if(!id){$('#setup').style.display='';$('#er').textContent='Първо запази Client ID.';return}
+ if(!window.google||!google.accounts){$('#er').textContent='Google не се зареди. Провери връзката и презареди страницата.';return}
+ tc=google.accounts.oauth2.initTokenClient({client_id:id,scope:SC,callback:r=>{if(r.error){$('#er').textContent='Входът не успя: '+r.error;return}tok=r.access_token;$('#go').style.display='none';$('#nt').style.display='';$('#rf').style.display='';load()},error_callback:e=>{$('#er').textContent='Входът беше отказан или блокиран ('+(e.type||'грешка')+').'}});
+ tc.requestAccessToken()}
+async function api(p){const r=await fetch('https://classroom.googleapis.com/v1/'+p,{headers:{Authorization:'Bearer '+tok}});if(r.status===401){tok=null;$('#go').style.display='';throw new Error('Сесията изтече. Свържи се отново.')}if(!r.ok)throw new Error('Classroom върна грешка '+r.status+(r.status===403?'. Провери правата и дали училището разрешава приложението.':''));return r.json()}
+const due=w=>{const d=w.dueDate;if(!d)return null;const t=w.dueTime;return t?new Date(Date.UTC(d.year,d.month-1,d.day,t.hours||0,t.minutes||0)):new Date(d.year,d.month-1,d.day,23,59)};
+async function load(){$('#er').textContent='';$('#out').innerHTML='<p class="m">Зареждам…</p>';items=[];
+ try{const cs=(await api('courses?courseStates=ACTIVE&studentId=me')).courses||[];
+  for(const c of cs){let w=[];try{w=(await api('courses/'+c.id+'/courseWork?pageSize=50')).courseWork||[]}catch(e){if(/401|Сесията/.test(e.message))throw e}
+   let st={};try{((await api('courses/'+c.id+'/courseWork/-/studentSubmissions?userId=me&pageSize=100')).studentSubmissions||[]).forEach(s=>st[s.courseWorkId]=s.state)}catch(e){}
+   w.filter(x=>x.state==='PUBLISHED').forEach(x=>items.push({id:c.id+'_'+x.id,course:c.name,title:x.title,link:x.alternateLink,due:due(x),done:['TURNED_IN','RETURNED'].includes(st[x.id])}))}
+  draw();check()}catch(e){$('#out').innerHTML='';$('#er').textContent=e.message}}
+const fd=d=>d.toLocaleString('bg-BG',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'});
+function card(x){const late=x.due&&x.due<new Date()&&!x.done,soon=x.due&&!late&&!x.done&&x.due-new Date()<864e5;
+ return`<div class="card"><p class="t">${esc(x.title)}</p><div class="row"><span class="chip">${esc(x.course)}</span>${x.done?'<span class="chip ok">Предадено</span>':late?'<span class="chip err">Просрочено</span>':soon?'<span class="chip warn">До 24 ч</span>':''}<span class="m">${x.due?'Срок: '+fd(x.due):'Без срок'}</span> <a class="m" href="${esc(x.link||'#')}" target="_blank" rel="noopener">Отвори в Classroom</a></div></div>`}
+function draw(){const open=items.filter(x=>!x.done&&x.due).sort((a,b)=>a.due-b.due),nod=items.filter(x=>!x.done&&!x.due),dn=items.filter(x=>x.done);
+ $('#out').innerHTML=(open.length?'<h2>Предстоящи и просрочени</h2>'+open.map(card).join(''):'<p class="m">Няма предстоящи задания със срок.</p>')+(nod.length?'<h2>Без срок</h2>'+nod.map(card).join(''):'')+(dn.length?'<h2>Предадени</h2>'+dn.map(card).join(''):'')}
+async function notif(){if(!('Notification' in window)){$('#er').textContent='Браузърът не поддържа известия.';return}const p=await Notification.requestPermission();if(p!=='granted'){$('#er').textContent='Известията са блокирани за този сайт.';return}$('#nt').textContent='Напомнянията са включени';clearInterval(iv);iv=setInterval(check,6e4);check()}
+function check(){if(!('Notification' in window)||Notification.permission!=='granted')return;let seen={};try{seen=JSON.parse(ls('lic_seen')||'{}')}catch(e){}
+ items.filter(x=>!x.done&&x.due&&x.due>new Date()&&x.due-new Date()<864e5&&!seen[x.id]).forEach(x=>{new Notification('Срок до 24 часа',{body:x.title+' ('+x.course+') · '+fd(x.due)});seen[x.id]=1});ls('lic_seen',JSON.stringify(seen))}
+init();
+</script>
+</body>
+</html>
