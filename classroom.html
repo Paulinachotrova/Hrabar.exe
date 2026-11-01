@@ -43,7 +43,8 @@ const $=s=>document.querySelector(s),esc=s=>String(s).replace(/[&<>"]/g,c=>({"&"
 const SC='https://www.googleapis.com/auth/classroom.courses.readonly https://www.googleapis.com/auth/classroom.coursework.me.readonly';
 let tok=null,tc=null,items=[],iv=null;
 const ls=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);localStorage.setItem(k,v)}catch(e){return null}};
-function init(){const id=ls('lic_cid');if(id){$('#cid').value=id;$('#setup').style.display='none'}}
+const DEFAULT_CID='649904501293-hkvsuiqqjus2022pkrmrvkv3nva311hf.apps.googleusercontent.com';
+function init(){const id=ls('lic_cid')||DEFAULT_CID;ls('lic_cid',id);$('#cid').value=id;$('#setup').style.display='none'}
 function saveId(){const v=$('#cid').value.trim();if(!/\.apps\.googleusercontent\.com$/.test(v)){$('#er').textContent='Client ID трябва да завършва на .apps.googleusercontent.com';return}ls('lic_cid',v);$('#er').textContent='';$('#setup').style.display='none'}
 function connect(){const id=ls('lic_cid');if(!id){$('#setup').style.display='';$('#er').textContent='Първо запази Client ID.';return}
  if(!window.google||!google.accounts){$('#er').textContent='Google не се зареди. Провери връзката и презареди страницата.';return}
