@@ -216,7 +216,7 @@ async function addFiles(list){const im=caps&&caps.images;for(const f of Array.fr
  else toast('Поддържат се снимки (JPG, PNG, WebP, GIF) и текстови файлове (TXT, MD, CSV).')}atts();upd()}
 async function send(){const t=$('#in').value.trim();if((!t&&!pend.length)||busy)return;const fs=pend.splice(0);$('#in').value='';$('#in').style.height='auto';await ask(t||'Разгледай прикаченото и ми помогни да го науча.',fs)}
 async function ask(t,fs=[],extra=''){
- if(!sample)return toast('Асистентът не е наличен в този изглед. Отвори страницата в Claude.');
+ if(!sample)return toast('Асистентът не е наличен. Добави Gemini AI ключ в Настройки или отвори страницата в Claude.');
  if(S.v!=='home')go('home');
  const tx=fs.filter(f=>f.k==='txt').map(f=>`Файл „${f.n}“:\n${f.t}`).join('\n\n'),imgs=fs.filter(f=>f.k==='img');
  const m={r:'u',t,f:fs.map(f=>f.n),im:imgs.map(f=>f.u),x:[extra,tx].filter(Boolean).join('\n\n')};
@@ -253,7 +253,7 @@ ${S.decks.length?`<div class="row" style="margin:18px 0 10px">${S.decks.map(d=>`
 function deckH(){const d=S.decks.find(x=>x.id===C.d);if(!d)return'<div class="empty">Избери тесте от горе.</div>';const c=d.c[C.i];return`<div class="card fc" onclick="C.f=!C.f;render()" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();C.f=!C.f;render()}"><div><small>${C.f?'Отговор':'Въпрос'} · ${C.i+1} от ${d.c.length}</small>${esc(C.f?c.a:c.q)}</div></div><div class="row" style="justify-content:space-between;margin-top:12px"><button class="btn" onclick="cs(-1)" ${C.i?'':'disabled'}>${ic('chevron-left')}Назад</button><button class="btn" onclick="delDeck('${d.id}')">${ic('trash-2')}Изтрий тестето</button><button class="btn pri" onclick="cs(1)" ${C.i<d.c.length-1?'':'disabled'}>Напред${ic('chevron-right')}</button></div>`}
 function cs(n){C.i+=n;C.f=false;render()}
 function delDeck(id){S.decks=S.decks.filter(d=>d.id!==id);sv('li_decks',S.decks);C.d=S.decks[0]?.id||null;C.i=0;C.f=false;render()}
-async function genCards(topic,mat,n=10){if(!sample)return toast('Асистентът не е наличен в този изглед. Отвори страницата в Claude.');if(!topic&&!mat){C.er='Въведи тема или избери материал.';return render()}if(!topic)topic=mat.n;C.ld=true;C.er='';render();
+async function genCards(topic,mat,n=10){if(!sample)return toast('Асистентът не е наличен. Добави Gemini AI ключ в Настройки или отвори страницата в Claude.');if(!topic&&!mat){C.er='Въведи тема или избери материал.';return render()}if(!topic)topic=mat.n;C.ld=true;C.er='';render();
  try{const a=await sample.json(`Създай ${n} карти за повторение на български по учебната тема „${topic}“${mat?' въз основа на този материал:\n'+mat.x.slice(0,12000):''}. Само учебно съдържание. Върни само JSON масив от обекти {"q":"въпрос","a":"кратък отговор"}.`,{cache:false});
   if(!Array.isArray(a)||!a.length||!a.every(x=>x&&x.q&&x.a))throw 0;const d={id:Date.now().toString(36),n:topic.slice(0,40),c:a.slice(0,n).map(x=>({q:String(x.q),a:String(x.a)}))};S.decks.unshift(d);sv('li_decks',S.decks);C.d=d.id;C.i=0;C.f=false;mark()}
  catch(e){C.er='Не успях да създам карти. Опитай с по-ясна тема.'}C.ld=false;if(S.v==='cards')render()}
@@ -353,7 +353,7 @@ function examH(){let h=`<div class="wrap"><div class="row" style="justify-conten
  return h+`<div class="row" style="justify-content:flex-end;margin-top:16px"><button class="btn pri" onclick="submitQ()">Предай работата</button></div></div>`}
 function setMc(i,j){Q.items[i].r=j;document.querySelectorAll('#t'+i+' .opt').forEach((b,k)=>b.classList.toggle('sel',k===j))}
 async function startQ(s){
- if(!sample)return toast('Асистентът не е наличен в този изглед. Отвори страницата в Claude.');
+ if(!sample)return toast('Асистентът не е наличен. Добави Gemini AI ключ в Настройки или отвори страницата в Claude.');
  const sp=specFor(s),e=EX[NS];qld=true;render();
  const base=`Ти съставяш изпитен вариант по ${s} за ${e.lv}, по формата и нивото на „${e.t}“ в България. Измисляй оригинални материали и задачи, не копирай реални изпитни. `;
  const call=async c=>{const pr=base+c.pr+' '+(c.parts?SCH2:SCH1)+RULES2;try{return await sample.json(pr,{cache:false})}catch(er){return await sample.json(pr,{cache:false})}};
@@ -417,7 +417,7 @@ window.addEventListener('beforeunload',e=>{if(T.run&&T.k==='f'){e.preventDefault
 V.classroom=()=>`<div class="wrap"><h2>Google Classroom</h2><p class="sub">Свържи класните си стаи, за да виждаш задачите и материалите на едно място.</p><div class="card" style="display:flex;gap:14px;align-items:flex-start">${ic('school')}<div><b>Виж заданията и сроковете си</b><p class="sub" style="margin:4px 0 12px">Отвори страницата Classroom, влез с Google и ще видиш всички задачи и срокове от курсовете си. Можеш и да добавиш материал ръчно.</p><div class="row"><button class="btn pri" onclick="window.open('classroom.html','_blank')">Свържи Google Classroom</button><button class="btn" onclick="openAdd()">${ic('plus')}Добави материал ръчно</button></div></div></div></div>`;
 V.settings=()=>{const a=S.prof.accent||'purple';return`<div class="wrap" style="max-width:600px"><h2>Настройки</h2><p class="sub">Данните се пазят само в този браузър.</p>
 <div class="card" style="margin-bottom:12px"><div class="row" style="justify-content:space-between"><div><b>${esc(S.prof.name||'Ученик')}</b><div class="m">${S.prof.grade?S.prof.grade+' клас':'Класът не е избран'}</div></div><button class="btn tiny" onclick="onboard(true)">Промени</button></div></div>
-${vc()}<div class="card"><p class="lbl2" style="margin-top:0">Режим</p><div class="seg">${[['light','Светъл'],['dark','Тъмен'],['system','Като системата']].map(t=>`<button class="${S.prof.theme===t[0]?'on':''}" onclick="S.prof.theme='${t[0]}';sv('li_prof',S.prof);theme();render()">${t[1]}</button>`).join('')}</div>
+${vc()}<div class="card" style="margin-bottom:12px"><p class="lbl2" style="margin-top:0">Gemini AI ключ</p><p class="m" style="margin:0 0 8px">${GKEY?'Ключът е запазен на това устройство и AI функциите са активни.':'Постави API ключ за Gemini, за да работят AI функциите на този сайт. Ключът се пази само в този браузър.'}</p><div class="row"><input type="password" id="gk" placeholder="API ключ" value="${esc(GKEY)}" style="flex:1;min-width:200px"><button class="btn pri tiny" onclick="saveGkey()">Запази</button>${GKEY?`<button class="btn tiny" onclick="sv('li_gkey','');location.reload()">Премахни</button>`:''}</div></div><div class="card"><p class="lbl2" style="margin-top:0">Режим</p><div class="seg">${[['light','Светъл'],['dark','Тъмен'],['system','Като системата']].map(t=>`<button class="${S.prof.theme===t[0]?'on':''}" onclick="S.prof.theme='${t[0]}';sv('li_prof',S.prof);theme();render()">${t[1]}</button>`).join('')}</div>
 <p class="lbl2">Цвят</p><div class="swrow" role="group" aria-label="Цвят">${Object.keys(ACC).map(k=>`<button class="sw ${a===k?'on':''}" style="background:${ACC[k].l[0]}" title="${ACC[k].n}" aria-label="${ACC[k].n}" aria-pressed="${a===k}" onclick="setAccent('${k}')"></button>`).join('')}</div>
 <div style="margin-top:22px;padding-top:16px;border-top:1px solid var(--line)"><button class="btn" id="rst" onclick="rst(this)" style="color:var(--err)">${ic('trash-2')}Изтрий всички данни</button></div></div></div>`};
 function rst(b){if(!b.dataset.c){b.dataset.c=1;b.lastChild.textContent='Натисни пак за потвърждение';setTimeout(()=>{b.dataset.c='';b.lastChild.textContent='Изтрий всички данни'},4000);return}['li_lib','li_decks','li_msgs','li_prof','li_days','li_sess','li_nres','li_nsec','li_min','li_rate','li_voice','li_auto'].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});S={v:'home',lib:[],decks:[],msgs:[],prof:{name:'',grade:'',theme:'system',accent:'purple'},days:[],sess:{}};C.d=null;Q=null;ND={};clearInterval(T.iv);T.run=false;T.away=false;T.k='f';T.m=25;T.left=1500;lockUI(false);document.getElementById('app').classList.remove('min');pend=[];theme();hdr();toast('Данните са изтрити.');go('home');onboard()}
@@ -427,7 +427,7 @@ function viewMat(id){const x=S.lib.find(m=>m.id===id);if(!x)return;$('#modal').i
 function pickN(id,w){const x=S.lib.find(m=>m.id===id);if(!x)return;$('#modal').innerHTML=`<div class="modal" onclick="if(event.target===this)closeM()"><div class="card" role="dialog" aria-label="Брой"><h2 style="margin:0 0 4px;font-size:18px">${w==='test'?'Тест':'Карти за повторение'}</h2><p class="sub">По материала „${esc(x.n)}“. Колко ${w==='test'?'въпроса':'карти'} да направя?</p><div class="row">${[10,15,20].map(n=>`<button class="btn pri" onclick="runN('${id}','${w}',${n})">${n}</button>`).join('')}<button class="btn" onclick="closeM()">Отказ</button></div></div></div>`}
 function runN(id,w,n){closeM();const x=S.lib.find(m=>m.id===id);if(!x)return;if(w==='test')genTest(x,n);else{go('cards');genCards(x.n,x,n)}}
 async function genTest(mat,n){
- if(!sample)return toast('Асистентът не е наличен в този изглед. Отвори страницата в Claude.');
+ if(!sample)return toast('Асистентът не е наличен. Добави Gemini AI ключ в Настройки или отвори страницата в Claude.');
  Q=null;go('nvo');qld=true;render();const parts=n>10?[Math.ceil(n/2),n-Math.ceil(n/2)]:[n];
  try{
   const rs=await Promise.all(parts.map((k,pi)=>sample.json(`Съставяш тест за преговор само по този учебен материал „${mat.n}“ (${mat.s}). Създай точно ${k} въпроса с избираем отговор (4 възможности, един верен) на български${parts.length>1?', '+(pi?'от втората':'от първата')+' половина на материала':''}, по различни теми. Не използвай факти извън материала. В "w" обясни защо всеки грешен отговор е грешен.\n\nМатериал:\n${mat.x.slice(0,12000)}\n\n`+SCH1,{cache:false})));
@@ -453,6 +453,7 @@ const MOT=['Започни с най-малкото, което можеш да 
 const motd=MOT[Math.floor(Math.random()*MOT.length)];
 const greet=()=>{const h=new Date().getHours(),g=h>=5&&h<11?'Добро утро':h>=11&&h<18?'Добър ден':'Добър вечер';return g+(S.prof.name?', '+S.prof.name:'')};
 function onboard(edit){const p=S.prof;$('#modal').innerHTML=`<div class="modal"${edit?' onclick="if(event.target===this)closeM()"':''}><div class="card" role="dialog" aria-label="${edit?'Профил':'Добре дошъл'}"><div class="row" style="flex-wrap:nowrap;align-items:flex-end;margin-bottom:12px">${mas(84,'wave')}<div class="bub">${edit?'Какво да променим?':'Здравей! Аз съм Катинко и ще ти помагам да учиш стъпка по стъпка.'}</div></div><h2 style="margin:0 0 4px;font-size:20px">${edit?'Промени профила':'Добре дошъл в Lock In AI'}</h2><p class="sub">${edit?'Смени името или класа си.':'Кажи ми как се казваш и в кой клас си, за да нагодя изпитите и тестовете за теб.'}</p><label class="lbl2" for="on">Име</label><input type="text" id="on" value="${esc(p.name)}" placeholder="Как да те наричам?" onkeydown="if(event.key==='Enter')saveOn(${!!edit})"><label class="lbl2" for="og">Клас</label><select id="og"><option value="">Избери клас</option>${[5,6,7,8,9,10,11,12].map(g=>`<option value="${g}" ${String(p.grade)===String(g)?'selected':''}>${g} клас</option>`).join('')}</select><div class="er" id="oer"></div><div class="row" style="justify-content:flex-end;margin-top:16px">${edit?'<button class="btn" onclick="closeM()">Отказ</button>':''}<button class="btn pri" onclick="saveOn(${!!edit})">${edit?'Запази':'Продължи'}</button></div></div></div>`;$('#on').focus()}
+function saveGkey(){const v=$('#gk').value.trim();if(!v){toast('Постави ключ.');return}sv('li_gkey',v);toast('Ключът е запазен. Презареждам…');setTimeout(()=>location.reload(),600)}
 function saveOn(edit){const n=$('#on').value.trim(),g=$('#og').value;if(!n||!g){$('#oer').textContent=!n?'Напиши името си.':'Избери класа си.';return}S.prof.name=n;S.prof.grade=g;sv('li_prof',S.prof);if(['7','10','12'].includes(g)){NS=g;sv('li_nsec',NS)}closeM();hdr();if(edit)toast('Профилът е обновен.');render();if(!edit)say('Приятно ми е, '+S.prof.name+'! '+motd,9000)}
 /* ---------- voice ---------- */
 const SR=window.SpeechRecognition||window.webkitSpeechRecognition,TTS='speechSynthesis' in window;
@@ -567,7 +568,7 @@ function vizGo(){const d={};let bad='';document.querySelectorAll('#vf input[data
  if(!bad&&M3.shape==='frustum'&&!(d.r<d.R))bad='Малкият радиус r трябва да е по-малък от големия R.';
  if(bad){$('#ver').textContent=bad;return}$('#ver').textContent='';M3.dd[M3.shape]=d;M3.unit=$('#vu').value;M3.meshShape=build3(M3.shape,d,M3.unit);if(M3.tab==='shape')M3.mesh=M3.meshShape;
  $('#vcalc').innerHTML=`<b>${SH[M3.shape].n}</b>${calc3(M3.shape,d,M3.unit).map(r=>`<div class="row" style="justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);margin-top:8px"><span class="m">${r[0]}</span><span style="text-align:right">${r[1]}</span></div>`).join('')}`;draw3()}
-async function vizAI(){const t=$('#vq').value.trim();if(!t)return;if(!sample)return toast('Асистентът не е наличен в този изглед. Отвори страницата в Claude.');const b=$('#vqb');b.disabled=true;
+async function vizAI(){const t=$('#vq').value.trim();if(!t)return;if(!sample)return toast('Асистентът не е наличен. Добави Gemini AI ключ в Настройки или отвори страницата в Claude.');const b=$('#vqb');b.disabled=true;
  try{const a=await sample.json(`Ученик описва геометрично тяло: „${t}“. Върни само JSON {"shape":"cube|box|cylinder|cone|frustum|sphere|pyramid|prism","dims":{...},"unit":"cm|mm|m"}. Размери по тяло: cube {a}; box {a:дължина,b:ширина,h:височина}; cylinder {r,h}; cone {r,h}; frustum {R:голям радиус,r:малък радиус,h}; sphere {r}; pyramid {a:основен ръб на квадратна основа,h}; prism {p,q:катети на правоъгълна основа,h:височина на призмата}. Ако е даден диаметър, дай радиус. Ако описанието не е едно от тези тела или няма размери, върни {"error":"кратко обяснение на български"}.`,{cache:false});
   if(!a||a.error||!SH[a.shape])throw new Error((a&&a.error)||'Не разпознах тяло. Опитай с куб, кутия, цилиндър, конус, сфера, пирамида или призма.');
   const d={};SH[a.shape].f.forEach(f=>{const v=+a.dims[f[0]];if(!(v>0))throw new Error('Липсва размер „'+f[1]+'“. Допълни го в описанието.');d[f[0]]=v});M3.shape=a.shape;M3.dd[a.shape]=d;M3.unit={cm:'см',mm:'мм',m:'м'}[a.unit]||'см';vizShapes();vizGo()}
@@ -624,7 +625,7 @@ const SCENE_PROMPT=t=>`Ти правиш 3D модели за ученици. З
 {"t":"for","n":брой,"v":"i","do":[части]} (повторение до 200; променливата v приема стойности 0..n-1)
 Числата в p, a, b, s, r и n могат да са низове с изрази, които ползват променливите от циклите и функциите sin, cos, tan, abs, sqrt, min, max, pow, floor и pi, например "3*cos(i*0.5)". Оста y е нагоре. Дръж модела в рамките на около ±10. Общо до 600 части; за повтарящи се структури ползвай цикли. Дай различни цветове и до 8 етикета (l) върху най-важните части.
 Пример за ДНК (двойна спирала): {"t":"for","n":40,"do":[{"t":"sphere","p":["2*cos(i*0.55)","i*0.4-8","2*sin(i*0.55)"],"r":0.35,"c":"#e74c3c"},{"t":"sphere","p":["-2*cos(i*0.55)","i*0.4-8","-2*sin(i*0.55)"],"r":0.35,"c":"#3498db"},{"t":"cyl","a":["2*cos(i*0.55)","i*0.4-8","2*sin(i*0.55)"],"b":["-2*cos(i*0.55)","i*0.4-8","-2*sin(i*0.55)"],"r":0.12,"c":"#f1c40f"}]}`;
-async function freeGo(){const t=$('#fq').value.trim();if(!t)return;if(!sample)return toast('Асистентът не е наличен в този изглед. Отвори страницата в Claude.');const b=$('#fgo');b.disabled=true;b.innerHTML=ic('loader-2','spin')+'Генерирам…';icons();$('#fer').textContent='';
+async function freeGo(){const t=$('#fq').value.trim();if(!t)return;if(!sample)return toast('Асистентът не е наличен. Добави Gemini AI ключ в Настройки или отвори страницата в Claude.');const b=$('#fgo');b.disabled=true;b.innerHTML=ic('loader-2','spin')+'Генерирам…';icons();$('#fer').textContent='';
  try{const a=await sample.json(SCENE_PROMPT(t),{cache:false});if(a&&a.error)throw Object.assign(new Error(String(a.error)),{my:1});const parts=[];expandParts(Array.isArray(a&&a.parts)?a.parts:[],{},parts);if(!parts.length)throw Object.assign(new Error('Не успях да изградя модела. Опиши го по-просто или опитай пак.'),{my:1});
   M3.meshFree=buildScene(parts);M3.freeInfo={t:String(a.title||t).slice(0,80),n:String(a.notes||'').slice(0,400),lb:M3.meshFree.lb.map(x=>x.t)};if(M3.tab==='free'){M3.mesh=M3.meshFree}fInfo();vizReset()}
  catch(e){$('#fer').textContent=e&&e.my?e.message:'Не успях да създам модела. Опитай пак или го опиши по-просто.'}
@@ -634,7 +635,28 @@ function vizTab(t){M3.tab=t;const a=$('#vp-shape'),b=$('#vp-free');if(a)a.style.
 /* ---------- init ---------- */
 if(ld('li_min',false)&&!matchMedia('(max-width:820px)').matches)$('#app').classList.add('min');
 theme();hdr();render();if(!S.prof.name.trim()||!S.prof.grade)onboard();else say('Здравей отново, '+S.prof.name+'! '+motd,9000);
-(async()=>{try{sample=await claude.use('sample');if(sample)caps=await sample.limits().catch(()=>null)}catch(e){sample=null}setAcc()})();
+/* ---------- Gemini adapter: прави AI функциите работещи на статичен хостинг (GitHub Pages).
+   Ключът е ограничен до този сайт и Gemini API; на claude.ai се ползва Claude както преди. ---------- */
+const GKEY=ld('li_gkey','').trim(),GMODEL='gemini-3.8-flash';
+const b64=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(String(r.result).split(',')[1]);r.onerror=rej;r.readAsDataURL(f)});
+async function gcall(contents,cfg){
+ const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${GMODEL}:generateContent?key=${GKEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents,generationConfig:cfg||{}})});
+ if(!r.ok){const e=new Error('AI грешка '+r.status);e.code=r.status===429?'rate_limited':r.status===403?'not_granted':'error';throw e}
+ const j=await r.json();const t=((j.candidates&&j.candidates[0]&&j.candidates[0].content&&j.candidates[0].content.parts)||[]).map(p=>p.text||'').join('');
+ if(!t){const e=new Error('Празен отговор от AI.');e.code='error';throw e}return t}
+async function gContents(input,images){
+ const msgs=typeof input==='string'?[{role:'user',content:input}]:input;
+ const c=msgs.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:String(m.content)}]}));
+ if(images&&images.length){const parts=c[c.length-1].parts;for(const f of images)parts.push({inline_data:{mime_type:f.type,data:await b64(f)}})}
+ return c}
+const gSample=async(input,opts={})=>{const t=await gcall(await gContents(input,opts.images));if(opts.onText)opts.onText({text:t,delta:t});return{text:t,truncated:false}};
+gSample.json=async(p,opts={})=>{const t=await gcall(await gContents(p),{responseMimeType:'application/json'});
+ try{return JSON.parse(t)}catch(e){const m=t.match(/```(?:json)?\s*([\s\S]*?)```/);if(m)return JSON.parse(m[1]);const i=[t.indexOf('{'),t.indexOf('[')].filter(x=>x>=0);return JSON.parse(t.slice(Math.min.apply(null,i)))}};
+gSample.limits=async()=>({images:{mediaTypes:['image/jpeg','image/png','image/webp','image/gif'],maxInputBytes:10*1024*1024}});
+(async()=>{try{sample=(window.claude&&claude.use)?await claude.use('sample'):null}catch(e){sample=null}
+ if(!sample&&GKEY)sample=gSample;
+ if(sample)try{caps=await sample.limits()}catch(e){caps=null}
+ setAcc()})();
 </script>
 </body>
 </html>
